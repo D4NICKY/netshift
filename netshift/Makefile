@@ -2,7 +2,7 @@ include $(TOPDIR)/rules.mk
 
 PKG_NAME:=netshift
 
-PKG_VERSION := $(if $(NETSHIFT_VERSION),$(NETSHIFT_VERSION),0.$(shell date +%d%m%Y))
+PKG_VERSION := $(if $(NETSHIFT_VERSION),$(NETSHIFT_VERSION),0.9.6)
 
 PKG_RELEASE:=1
 
