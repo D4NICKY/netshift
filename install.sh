@@ -1,8 +1,9 @@
 #!/bin/sh
 # shellcheck shell=dash
 
-REPO="https://api.github.com/repos/yandexru45/netshift/releases/latest"
-RELEASES_LATEST_REDIRECT="https://github.com/yandexru45/netshift/releases/latest"
+REPO="https://gh.ddlc.top/https://api.github.com/repos/yandexru45/netshift/releases/latest"
+RELEASES_LATEST_REDIRECT="https://gh.ddlc.top/https://github.com/yandexru45/netshift/releases/latest"
+RELEASES_DOWNLOAD_BASE="https://gh.ddlc.top/https://github.com/yandexru45/netshift/releases/download"
 DOWNLOAD_DIR="/tmp/netshift"
 COUNT=3
 
@@ -59,9 +60,9 @@ update_config() {
     printf "\033[48;5;196m\033[1m╔══════════════════════════════════════════════════════════════════════╗\033[0m\n"
     printf "\033[48;5;196m\033[1m║ ! Обнаружена старая версия NetShift.                                 ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Если продолжите обновление, вам потребуется настроить NetShift заново.║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Старая конфигурация будет сохранена в /etc/config/netshift-070        ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Подробности: https://github.com/yandexru45/netshift                  ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Точно хотите продолжить?                                              ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Старая конфигурация будет сохранена в /etc/config/netshift-070       ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Подробности: https://gh.ddlc.top/https://github.com/yandexru45/netshift ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Точно хотите продолжить?                                             ║\033[0m\n"
     printf "\033[48;5;196m\033[1m╚══════════════════════════════════════════════════════════════════════╝\033[0m\n"
 
     echo ""
@@ -70,18 +71,19 @@ update_config() {
     printf "\033[48;5;196m\033[1m║ ! Detected old NetShift version.                                     ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ If you continue the update, you will need to RECONFIGURE NetShift.   ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Your old configuration will be saved to /etc/config/netshift-070     ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Details: https://github.com/yandexru45/netshift                      ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Details: https://gh.ddlc.top/https://github.com/yandexru45/netshift  ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Are you sure you want to continue?                                   ║\033[0m\n"
     printf "\033[48;5;196m\033[1m╚══════════════════════════════════════════════════════════════════════╝\033[0m\n"
 
     msg "Continue? (yes/no)"
 
     while true; do
-        read -r -p '' CONFIG_UPDATE
-        case $CONFIG_UPDATE in
+            read -r -p '' CONFIG_UPDATE
+            case $CONFIG_UPDATE in
+
             yes|y|Y)
                 mv /etc/config/netshift /etc/config/netshift-070
-                wget --no-check-certificate -O /etc/config/netshift https://cdn.jsdelivr.net/gh/D4NICKY/netshift/netshift/files/etc/config/netshift
+                wget -O /etc/config/netshift https://gh.ddlc.top/https://raw.githubusercontent.com/yandexru45/netshift/refs/heads/main/netshift/files/etc/config/netshift
                 msg "NetShift config has been reset to default. Your old config saved in /etc/config/netshift-070"
                 break
                 ;;
@@ -112,21 +114,21 @@ migrate_from_podkop() {
 
     printf "\033[48;5;196m\033[1m╔══════════════════════════════════════════════════════════════════════╗\033[0m\n"
     printf "\033[48;5;196m\033[1m║ ! Обнаружена установка podkop. Она будет перенесена в NetShift.      ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Ваша конфигурация будет перенесена автоматически.                    ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Ваша конфигурация будет перенесена автоматически.                   ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Старая конфигурация сохранится в /etc/config/podkop.bak.pre-netshift║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Старый пакет podkop будет удалён, NetShift будет установлен.          ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Подробности: https://github.com/yandexru45/netshift                  ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Точно хотите продолжить?                                              ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Старый пакет podkop будет удалён, NetShift будет установлен.         ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Подробности: https://gh.ddlc.top/https://github.com/yandexru45/netshift ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Точно хотите продолжить?                                             ║\033[0m\n"
     printf "\033[48;5;196m\033[1m╚══════════════════════════════════════════════════════════════════════╝\033[0m\n"
 
     echo ""
 
     printf "\033[48;5;196m\033[1m╔══════════════════════════════════════════════════════════════════════╗\033[0m\n"
     printf "\033[48;5;196m\033[1m║ ! Detected a podkop install. It will be migrated to NetShift.        ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Your configuration will be carried over automatically.               ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Your configuration will be carried over automatically.              ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Old config will be backed up to /etc/config/podkop.bak.pre-netshift ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ The old podkop package will be removed, NetShift installed.          ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Details: https://github.com/yandexru45/netshift                      ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Details: https://gh.ddlc.top/https://github.com/yandexru45/netshift  ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Are you sure you want to continue?                                   ║\033[0m\n"
     printf "\033[48;5;196m\033[1m╚══════════════════════════════════════════════════════════════════════╝\033[0m\n"
 
@@ -214,7 +216,7 @@ download_release_asset() {
     attempt=0
     while [ $attempt -lt $COUNT ]; do
         msg "Download $filename (count $((attempt + 1)))..."
-        if wget --no-check-certificate -q -O "$filepath" "$url"; then
+        if wget -q -O "$filepath" "$url"; then
             if [ -s "$filepath" ]; then
                 msg "$filename successfully downloaded"
                 return 0
@@ -243,54 +245,62 @@ main() {
         msg "Installing NetShift..."
     fi
 
-    local ext release_tag redirect_url CDN_BASE
+    local ext release_tag redirect_url
     if [ "$PKG_IS_APK" -eq 1 ]; then
         ext="apk"
     else
         ext="ipk"
     fi
 
-    # Получаем заголовок Location редиректа через wget без использования curl
     release_tag=""
-    redirect_url=$(wget --no-check-certificate --max-redirect=0 "$RELEASES_LATEST_REDIRECT" 2>&1 | grep -i "Location:" | awk '{print $2}')
-    case "$redirect_url" in
+    if command -v curl >/dev/null 2>&1; then
+        redirect_url=$(curl -sI -o /dev/null -w '%{redirect_url}' \
+            --connect-timeout 5 -m 15 -A 'netshift-installer' \
+            "$RELEASES_LATEST_REDIRECT" 2>/dev/null)
+        case "$redirect_url" in
         */releases/tag/*)
             release_tag="${redirect_url##*/releases/tag/}"
             case "$release_tag" in '' | */*) release_tag="" ;; esac
             ;;
-    esac
+        esac
+    fi
 
-    # Скачивание файлов через jsDelivr CDN
     if [ -n "$release_tag" ]; then
-        msg "Latest NetShift release: $release_tag (via jsDelivr CDN)"
-        
-        CDN_BASE="https://cdn.jsdelivr.net/gh/yandexru45/netshift@$release_tag"
-
+        msg "Latest NetShift release: $release_tag (direct download, no GitHub API)"
         for pkg in netshift luci-app-netshift; do
             if [ "$ext" = "ipk" ]; then
                 filename="${pkg}-${release_tag}-r1-all.${ext}"
             else
                 filename="${pkg}-${release_tag}-r1.${ext}"
             fi
-            download_release_asset "$CDN_BASE/$filename" "$filename"
+            download_release_asset "$RELEASES_DOWNLOAD_BASE/$release_tag/$filename" "$filename"
         done
 
         if pkg_is_installed luci-i18n-netshift-ru; then
             filename="luci-i18n-netshift-ru-${release_tag}.${ext}"
-            download_release_asset "$CDN_BASE/$filename" "$filename"
+            download_release_asset "$RELEASES_DOWNLOAD_BASE/$release_tag/$filename" "$filename"
         fi
     else
-        # Резервная загрузка из ветки main через jsDelivr
-        msg "Fallback: Trying jsDelivr main branch CDN directly..."
-        CDN_BASE="https://cdn.jsdelivr.net/gh/yandexru45/netshift@main"
-        
-        for pkg in netshift luci-app-netshift; do
-            filename="${pkg}.${ext}"
-            download_release_asset "$CDN_BASE/$filename" "$filename"
+        if command -v curl >/dev/null 2>&1; then
+            check_response=$(curl -s "$REPO")
+
+            if echo "$check_response" | grep -q 'API rate limit '; then
+                msg "You've reached the GitHub rate limit. Repeat in five minutes."
+                exit 1
+            fi
+        fi
+
+        local grep_url_pattern
+        grep_url_pattern="https://[^\"[:space:]]*\.${ext}"
+
+        wget -qO- "$REPO" | grep -o "$grep_url_pattern" | while read -r url; do
+            # Замена оригинальных URL при скачивании через прокси
+            proxy_url=$(echo "$url" | sed 's#https://github.com/#https://gh.ddlc.top/https://github.com/#g')
+            filename=$(basename "$url")
+            download_release_asset "$proxy_url" "$filename"
         done
     fi
 
-    # Проверка скачанных пакетов
     if ! ls "$DOWNLOAD_DIR"/*netshift* >/dev/null 2>&1; then
         msg "No packages were downloaded successfully"
         exit 1
@@ -443,4 +453,4 @@ sing_box() {
     fi
 }
 
-main
+main "$@"
