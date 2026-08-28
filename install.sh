@@ -2,12 +2,7 @@
 # shellcheck shell=dash
 
 REPO="https://api.github.com/repos/yandexru45/netshift/releases/latest"
-# github.com FRONTEND redirect path (NOT the rate-limited api.github.com).
-# /releases/latest 302s to /releases/tag/<tag>; /releases/download/<tag>/<asset>
-# 302s to the CDN. Primary install path so CGNAT / shared-IP routers avoid the
-# 60/hour/IP API limit; REPO stays as the fallback.
 RELEASES_LATEST_REDIRECT="https://github.com/yandexru45/netshift/releases/latest"
-RELEASES_DOWNLOAD_BASE="https://github.com/yandexru45/netshift/releases/download"
 DOWNLOAD_DIR="/tmp/netshift"
 COUNT=3
 
@@ -26,9 +21,6 @@ pkg_is_installed () {
     local pkg_name="$1"
 
     if [ "$PKG_IS_APK" -eq 1 ]; then
-        # grep -q should work without change based on example from documentation
-        # apk list --installed --providers dnsmasq
-        # <dnsmasq> dnsmasq-full-2.90-r3 x86_64 {feeds/base/package/network/services/dnsmasq} (GPL-2.0) [installed]
         apk list --installed | grep -q "$pkg_name"
     else
         opkg list-installed | grep -q "$pkg_name"
@@ -39,8 +31,6 @@ pkg_remove() {
     local pkg_name="$1"
 
     if [ "$PKG_IS_APK" -eq 1 ]; then
-        # TODO: check --force-depends flag
-        # Nothing here: https://openwrt.org/docs/guide-user/additional-software/opkg-to-apk-cheatsheet
         apk del "$pkg_name"
     else
         opkg remove --force-depends "$pkg_name"
@@ -59,8 +49,6 @@ pkg_install() {
     local pkg_file="$1"
 
     if [ "$PKG_IS_APK" -eq 1 ]; then
-        # Can't install without flag based on info from documentation
-        # If you're installing a non-standard (self-built) package, use the --allow-untrusted option:
         apk add --allow-untrusted "$pkg_file"
     else
         opkg install --force-downgrade --force-reinstall "$pkg_file"
@@ -71,9 +59,9 @@ update_config() {
     printf "\033[48;5;196m\033[1m╔══════════════════════════════════════════════════════════════════════╗\033[0m\n"
     printf "\033[48;5;196m\033[1m║ ! Обнаружена старая версия NetShift.                                 ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Если продолжите обновление, вам потребуется настроить NetShift заново.║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Старая конфигурация будет сохранена в /etc/config/netshift-070       ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Старая конфигурация будет сохранена в /etc/config/netshift-070        ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Подробности: https://github.com/yandexru45/netshift                  ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Точно хотите продолжить?                                             ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Точно хотите продолжить?                                              ║\033[0m\n"
     printf "\033[48;5;196m\033[1m╚══════════════════════════════════════════════════════════════════════╝\033[0m\n"
 
     echo ""
@@ -89,9 +77,8 @@ update_config() {
     msg "Continue? (yes/no)"
 
     while true; do
-            read -r -p '' CONFIG_UPDATE
-            case $CONFIG_UPDATE in
-
+        read -r -p '' CONFIG_UPDATE
+        case $CONFIG_UPDATE in
             yes|y|Y)
                 mv /etc/config/netshift /etc/config/netshift-070
                 wget -O /etc/config/netshift https://cdn.jsdelivr.net/gh/D4NICKY/netshift/netshift/files/etc/config/netshift
@@ -106,8 +93,6 @@ update_config() {
     done
 }
 
-# Detect whether an OLD podkop install is present on this router.
-# Returns 0 (true) if any podkop artifact is found.
 podkop_is_installed() {
     if [ -f "/etc/config/podkop" ]; then
         return 0
@@ -121,29 +106,24 @@ podkop_is_installed() {
     return 1
 }
 
-# Migrate an existing podkop (< 0.8.0) install to NetShift.
-# podkop never reached 0.8.0, so any old podkop install triggers this.
-# Every step is guarded by existence checks, POSIX, and idempotent so that
-# re-running install.sh is safe.
 migrate_from_podkop() {
     local old_version
     old_version=$(/usr/bin/podkop show_version 2>/dev/null)
 
-    # 1. Bilingual banner (RU first, EN second) + confirmation prompt.
     printf "\033[48;5;196m\033[1m╔══════════════════════════════════════════════════════════════════════╗\033[0m\n"
     printf "\033[48;5;196m\033[1m║ ! Обнаружена установка podkop. Она будет перенесена в NetShift.      ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Ваша конфигурация будет перенесена автоматически.                   ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Ваша конфигурация будет перенесена автоматически.                    ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Старая конфигурация сохранится в /etc/config/podkop.bak.pre-netshift║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Старый пакет podkop будет удалён, NetShift будет установлен.         ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Старый пакет podkop будет удалён, NetShift будет установлен.          ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Подробности: https://github.com/yandexru45/netshift                  ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Точно хотите продолжить?                                             ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Точно хотите продолжить?                                              ║\033[0m\n"
     printf "\033[48;5;196m\033[1m╚══════════════════════════════════════════════════════════════════════╝\033[0m\n"
 
     echo ""
 
     printf "\033[48;5;196m\033[1m╔══════════════════════════════════════════════════════════════════════╗\033[0m\n"
     printf "\033[48;5;196m\033[1m║ ! Detected a podkop install. It will be migrated to NetShift.        ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Your configuration will be carried over automatically.              ║\033[0m\n"
+    printf "\033[48;5;196m\033[1m║ Your configuration will be carried over automatically.               ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Old config will be backed up to /etc/config/podkop.bak.pre-netshift ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ The old podkop package will be removed, NetShift installed.          ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Details: https://github.com/yandexru45/netshift                      ║\033[0m\n"
@@ -166,23 +146,16 @@ migrate_from_podkop() {
             ;;
     esac
 
-    # 2. Stop the old service if running. The old 'stop' restores dnsmasq
-    #    (podkop_server/noresolv/cachesize keys in /etc/config/dhcp), removes
-    #    the old nft table PodkopTable and the '105 podkop' rt_tables line.
-    #    Must run BEFORE removing the package for a clean teardown.
     if [ -x "/etc/init.d/podkop" ]; then
         msg "Stopping old podkop service..."
         /etc/init.d/podkop stop 2>/dev/null || true
     fi
 
-    # 3. Disable old rc.d autostart (best-effort).
     if [ -x "/etc/init.d/podkop" ]; then
         msg "Disabling old podkop autostart..."
         /etc/init.d/podkop disable 2>/dev/null || true
     fi
 
-    # 4. Migrate config (copy first, then remove the original — we keep a
-    #    backup). Schema is compatible.
     if [ -f "/etc/config/podkop" ]; then
         if [ ! -f "/etc/config/netshift" ]; then
             msg "Migrating config /etc/config/podkop -> /etc/config/netshift..."
@@ -193,42 +166,29 @@ migrate_from_podkop() {
         if [ ! -f "/etc/config/podkop.bak.pre-netshift" ]; then
             cp /etc/config/podkop /etc/config/podkop.bak.pre-netshift 2>/dev/null || true
         fi
-        # Remove the original /etc/config/podkop so a re-run does not keep
-        # detecting an "old podkop install" (podkop_is_installed checks this
-        # path). opkg/apk never delete user config, so we must do it here.
-        # Only remove once the backup is confirmed present, to avoid data loss.
         if [ -f "/etc/config/podkop.bak.pre-netshift" ]; then
             msg "Removing migrated /etc/config/podkop (backup kept at podkop.bak.pre-netshift)..."
             rm -f /etc/config/podkop 2>/dev/null || true
         fi
     fi
 
-    # 5. Migrate state dir (preserves subscription cache). Best-effort.
     if [ -d "/etc/podkop" ] && [ ! -d "/etc/netshift" ]; then
         msg "Migrating state dir /etc/podkop -> /etc/netshift..."
         cp -r /etc/podkop /etc/netshift 2>/dev/null || true
     fi
 
-    # 6. Clean leftover OLD persistent system state that opkg/apk remove won't.
-    #    rt_tables: remove old '105 podkop' line (NetShift adds '105 netshift'
-    #    itself on start).
     if [ -f "/etc/iproute2/rt_tables" ] && grep -q "105 podkop" /etc/iproute2/rt_tables 2>/dev/null; then
         msg "Removing old '105 podkop' rt_tables entry..."
         sed -i "/105 podkop/d" /etc/iproute2/rt_tables 2>/dev/null || true
     fi
-    #    Old cron lines: strip entries that call the old binary (NetShift re-adds
-    #    its own on start).
+
     if crontab -l >/dev/null 2>&1; then
         if crontab -l 2>/dev/null | grep -q "/usr/bin/podkop"; then
             msg "Removing old podkop cron entries..."
             crontab -l 2>/dev/null | grep -v "/usr/bin/podkop" | crontab - 2>/dev/null || true
         fi
     fi
-    #    NOTE: nft table PodkopTable + dnsmasq keys are cleaned by the
-    #    '/etc/init.d/podkop stop' above; we do NOT hand-edit /etc/config/dhcp.
 
-    # 7. Remove OLD packages (after config/state migrated).
-    #    Order: i18n, then luci-app, then backend.
     if pkg_is_installed luci-i18n-podkop; then
         msg "Removing old luci-i18n-podkop* packages..."
         pkg_remove luci-i18n-podkop*
@@ -242,12 +202,10 @@ migrate_from_podkop() {
         pkg_remove podkop
     fi
 
-    # 8. Done.
     msg "Migration complete. NetShift will now be installed."
     msg "Your old config is preserved at /etc/config/podkop.bak.pre-netshift"
 }
 
-# Download one release asset URL into $DOWNLOAD_DIR with retry. POSIX sh.
 download_release_asset() {
     url="$1"
     filename="$2"
@@ -285,16 +243,14 @@ main() {
         msg "Installing NetShift..."
     fi
 
-    local ext release_tag redirect_url
+    local ext release_tag redirect_url CDN_BASE
     if [ "$PKG_IS_APK" -eq 1 ]; then
         ext="apk"
     else
         ext="ipk"
     fi
 
-    # PRIMARY: resolve the latest tag via the github.com frontend redirect (no
-    # api.github.com hit → not subject to the 60/hour/IP rate limit), then build
-    # the deterministic releases/download/<tag>/<asset> URLs and download them.
+    # 1. Получаем актуальный тег последней версии
     release_tag=""
     if command -v curl >/dev/null 2>&1; then
         redirect_url=$(curl -sI -o /dev/null -w '%{redirect_url}' \
@@ -308,42 +264,38 @@ main() {
         esac
     fi
 
+    # 2. Формируем ссылки и скачиваем файлы через jsDelivr CDN
     if [ -n "$release_tag" ]; then
-        msg "Latest NetShift release: $release_tag (direct download, no GitHub API)"
+        msg "Latest NetShift release: $release_tag (via jsDelivr CDN)"
+        
+        # Базовый URL jsDelivr CDN для коммита/тега в репозитории
+        CDN_BASE="https://cdn.jsdelivr.net/gh/yandexru45/netshift@$release_tag"
+
         for pkg in netshift luci-app-netshift; do
             if [ "$ext" = "ipk" ]; then
                 filename="${pkg}-${release_tag}-r1-all.${ext}"
             else
                 filename="${pkg}-${release_tag}-r1.${ext}"
             fi
-            download_release_asset "$RELEASES_DOWNLOAD_BASE/$release_tag/$filename" "$filename"
+            download_release_asset "$CDN_BASE/$filename" "$filename"
         done
-        # RU i18n only if already installed (mirrors the install flow below).
+
         if pkg_is_installed luci-i18n-netshift-ru; then
             filename="luci-i18n-netshift-ru-${release_tag}.${ext}"
-            download_release_asset "$RELEASES_DOWNLOAD_BASE/$release_tag/$filename" "$filename"
+            download_release_asset "$CDN_BASE/$filename" "$filename"
         fi
     else
-        # FALLBACK: scrape the api.github.com release JSON for .ipk/.apk URLs.
-        if command -v curl >/dev/null 2>&1; then
-            check_response=$(curl -s "$REPO")
-
-            if echo "$check_response" | grep -q 'API rate limit '; then
-                msg "You've reached the GitHub rate limit. Repeat in five minutes."
-                exit 1
-            fi
-        fi
-
-        local grep_url_pattern
-        grep_url_pattern="https://[^\"[:space:]]*\.${ext}"
-
-        wget -qO- "$REPO" | grep -o "$grep_url_pattern" | while read -r url; do
-            filename=$(basename "$url")
-            download_release_asset "$url" "$filename"
+        # Резервный механизм, если редирект GitHub заблокирован: пробуем через jsDelivr напрямую
+        msg "Fallback: Trying jsDelivr main branch CDN directly..."
+        CDN_BASE="https://cdn.jsdelivr.net/gh/yandexru45/netshift@main"
+        
+        for pkg in netshift luci-app-netshift; do
+            filename="${pkg}.${ext}"
+            download_release_asset "$CDN_BASE/$filename" "$filename"
         done
     fi
 
-    # Check if any files were downloaded
+    # Проверка скачанных пакетов
     if ! ls "$DOWNLOAD_DIR"/*netshift* >/dev/null 2>&1; then
         msg "No packages were downloaded successfully"
         exit 1
@@ -401,11 +353,9 @@ main() {
 }
 
 check_system() {
-    # Get router model
     MODEL=$(cat /tmp/sysinfo/model)
     msg "Router model: $MODEL"
 
-    # Check OpenWrt version
     openwrt_version=$(cat /etc/openwrt_release | grep DISTRIB_RELEASE | cut -d"'" -f2 | cut -d'.' -f1)
     if [ "$openwrt_version" = "23" ]; then
         msg "OpenWrt 23.05 не поддерживается начиная с NetShift 0.8.0"
@@ -414,9 +364,8 @@ check_system() {
         exit 1
     fi
 
-    # Check available space
     AVAILABLE_SPACE=$(df /overlay | awk 'NR==2 {print $4}')
-    REQUIRED_SPACE=15360 # 15MB in KB
+    REQUIRED_SPACE=15360
 
     if [ "$AVAILABLE_SPACE" -lt "$REQUIRED_SPACE" ]; then
         msg "Error: Insufficient space in flash"
@@ -430,14 +379,11 @@ check_system() {
         exit 1
     fi
 
-    # Old podkop install detected -> migrate to NetShift before installing the
-    # new packages. podkop never reached 0.8.0, so ANY old podkop triggers this.
     if podkop_is_installed; then
         migrate_from_podkop
         return
     fi
 
-    # Otherwise check existing NetShift version (just upgrading NetShift).
     if command -v netshift > /dev/null 2>&1; then
         local version
         version=$(/usr/bin/netshift show_version 2> /dev/null)
@@ -450,7 +396,6 @@ check_system() {
             minor=$(echo "$version" | cut -d. -f2)
             patch=$(echo "$version" | cut -d. -f3)
 
-            # Compare version: must be >= 0.8.0
             if [ "$major" -gt 0 ] ||
                 { [ "$major" -eq 0 ] && [ "$minor" -gt 8 ]; } ||
                 { [ "$major" -eq 0 ] && [ "$minor" -eq 8 ] && [ "$patch" -ge 0 ]; }; then
