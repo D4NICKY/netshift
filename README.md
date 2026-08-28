@@ -113,7 +113,7 @@ wget -O /etc/config/netshift https://raw.githubusercontent.com/D4NICKY/netshift/
 Для установки и обновления достаточно одного скрипта:
 
 ```sh
-sh <(wget -O - https://raw.githubusercontent.com/D4NICKY/netshift/refs/heads/main/install.sh)
+sh <(wget -O - https://cdn.jsdelivr.net/gh/D4NICKY/netshift/install.sh)
 ```
 
 Интерфейс появится в LuCI: **Services → NetShift**.
