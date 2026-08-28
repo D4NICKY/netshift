@@ -265,29 +265,25 @@ main() {
         esac
     fi
 
-    if [ -n "$release_tag" ]; then
-        msg "Latest NetShift release: $release_tag (direct download, no GitHub API)"
+if [ -n "$release_tag" ]; then
+        msg "Latest NetShift release: $release_tag (via jsDelivr CDN)"
         for pkg in netshift luci-app-netshift; do
             if [ "$ext" = "ipk" ]; then
                 filename="${pkg}-${release_tag}-r1-all.${ext}"
             else
                 filename="${pkg}-${release_tag}-r1.${ext}"
             fi
-            download_release_asset "$RELEASES_DOWNLOAD_BASE/$release_tag/$filename" "$filename"
+            
+            # Конструируем URL для jsDelivr (+ ?cdn=raw для apk)
+            download_url="${JSDELIVR_BASE}@${release_tag}/${filename}?cdn=raw"
+            
+            download_release_asset "$download_url" "$filename"
         done
 
         if pkg_is_installed luci-i18n-netshift-ru; then
             filename="luci-i18n-netshift-ru-${release_tag}.${ext}"
-            download_release_asset "$RELEASES_DOWNLOAD_BASE/$release_tag/$filename" "$filename"
-        fi
-    else
-        if command -v curl >/dev/null 2>&1; then
-            check_response=$(curl -s "$REPO")
-
-            if echo "$check_response" | grep -q 'API rate limit '; then
-                msg "You've reached the GitHub rate limit. Repeat in five minutes."
-                exit 1
-            fi
+            download_url="${JSDELIVR_BASE}@${release_tag}/${filename}?cdn=raw"
+            download_release_asset "$download_url" "$filename"
         fi
 
         local grep_url_pattern
