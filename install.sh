@@ -18,7 +18,7 @@ msg() {
     printf "\033[32;1m%s\033[0m\n" "$1"
 }
 
-pkg_is_installed () {
+pkg_is_installed() {
     local pkg_name="$1"
     if [ "$PKG_IS_APK" -eq 1 ]; then
         apk list --installed 2>/dev/null | grep -q "$pkg_name"
@@ -65,28 +65,32 @@ download_file() {
 
 get_latest_version() {
     local raw_json=""
+    local ver=""
     
-    # Вперёд пробуем jsDelivr API
+    # 1. Запрос к jsDelivr API
     if command -v curl >/dev/null 2>&1; then
         raw_json=$(curl -sL --connect-timeout 5 -m 10 "$JSDELIVR_API")
     else
         raw_json=$(wget -qO- "$JSDELIVR_API" 2>/dev/null)
     fi
 
-    local ver=""
+    # Надежный парсинг версии через sed без использования grep
     if [ -n "$raw_json" ]; then
         ver=$(echo "$raw_json" | sed -n 's/.*"latest":"\([^"]*\)".*/\1/p')
     fi
 
-    # Если jsDelivr недоступен, получаем через редирект зеркала
+    # 2. Если jsDelivr не вернул версию, берем тег через зеркало gh.ddlc.top
     if [ -z "$ver" ]; then
-        local redir=""
+        local location=""
         if command -v curl >/dev/null 2>&1; then
-            redir=$(curl -sI "https://gh.ddlc.top/https://github.com/yandexru45/netshift/releases/latest" | grep -i "^location:" | tr -d '\r')
+            location=$(curl -sI --connect-timeout 5 "https://gh.ddlc.top/https://github.com/yandexru45/netshift/releases/latest" | awk -F': ' '/[L|l]ocation/ {print $2}' | tr -d '\r')
         else
-            redir=$(wget --spider --server-response "https://gh.ddlc.top/https://github.com/yandexru45/netshift/releases/latest" 2>&1 | grep -i "^location:" | tr -d '\r')
+            location=$(wget --spider --server-response "https://gh.ddlc.top/https://github.com/yandexru45/netshift/releases/latest" 2>&1 | awk -F': ' '/[L|l]ocation/ {print $2}' | tr -d '\r')
         fi
-        ver=$(echo "$redir" | sed -n 's/.*\/tag\/\([^[:space:]]*\).*/\1/p')
+        
+        if [ -n "$location" ]; then
+            ver="${location##*/}"
+        fi
     fi
 
     echo "$ver"
@@ -102,19 +106,19 @@ download_release_asset() {
 
     attempt=0
     while [ $attempt -lt $COUNT ]; do
-        msg "Download $filename (attempt $((attempt + 1)))..."
+        msg "Downloading $filename (attempt $((attempt + 1)))..."
         
-        # 1. Пробуем jsDelivr
+        # Попытка через jsDelivr CDN
         download_file "$url_jsdelivr" "$filepath"
         if [ -s "$filepath" ]; then
-            msg "$filename downloaded successfully (jsDelivr)"
+            msg "$filename downloaded successfully (via jsDelivr)"
             return 0
         fi
 
-        # 2. Пробуем зеркало GitHub
+        # Попытка через зеркало GitHub
         download_file "$url_mirror" "$filepath"
         if [ -s "$filepath" ]; then
-            msg "$filename downloaded successfully (gh.ddlc.top)"
+            msg "$filename downloaded successfully (via gh.ddlc.top)"
             return 0
         fi
 
@@ -202,7 +206,7 @@ main() {
     fi
 
     find "$DOWNLOAD_DIR" -type f -name '*netshift*' -exec rm {} \;
-    msg "NetShift setup complete!"
+    msg "NetShift installation finished!"
 }
 
 main "$@"
