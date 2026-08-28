@@ -1,9 +1,9 @@
 #!/bin/sh
 # shellcheck shell=dash
 
-REPO="https://gh.ddlc.top/https://api.github.com/repos/yandexru45/netshift/releases/latest"
-RELEASES_LATEST_REDIRECT="https://gh.ddlc.top/https://github.com/yandexru45/netshift/releases/latest"
-RELEASES_DOWNLOAD_BASE="https://gh.ddlc.top/https://github.com/yandexru45/netshift/releases/download"
+REPO="https://cdn.jsdelivr.net/gh/yandexru45/netshift@latest/package.json"
+# Вместо RELEASES_DOWNLOAD_BASE создаем базовый URL jsDelivr
+JSDELIVR_BASE="https://cdn.jsdelivr.net/gh/yandexru45/netshift"
 DOWNLOAD_DIR="/tmp/netshift"
 COUNT=3
 
