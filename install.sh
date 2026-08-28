@@ -94,7 +94,7 @@ update_config() {
 
             yes|y|Y)
                 mv /etc/config/netshift /etc/config/netshift-070
-                wget -O /etc/config/netshift https://raw.githubusercontent.com/yandexru45/netshift/refs/heads/main/netshift/files/etc/config/netshift
+                wget -O /etc/config/netshift https://cdn.jsdelivr.net/gh/D4NICKY/netshift/netshift/files/etc/config/netshift
                 msg "NetShift config has been reset to default. Your old config saved in /etc/config/netshift-070"
                 break
                 ;;
