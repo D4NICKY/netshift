@@ -6,8 +6,8 @@
   <img src="./docs/icon.png" alt="Clash" width="128" />
   <br>
   <br>
-  <a href="https://github.com/yandexru45/netshift/releases">
-    <img src="https://img.shields.io/github/release/yandexru45/netshift/all.svg">
+  <a href="https://github.com/D4NICKY/netshift/releases">
+    <img src="https://img.shields.io/github/release/D4NICKY/netshift/all.svg">
   </a>
 </p>
 <h3 align="center"><a href="https://github.com/sagernet/sing-box">Sing-box</a> client for Openwrt</h3>
@@ -100,7 +100,7 @@
 
 ```sh
 mv /etc/config/netshift /etc/config/netshift-070
-wget -O /etc/config/netshift https://raw.githubusercontent.com/yandexru45/netshift/refs/heads/main/netshift/files/etc/config/netshift
+wget -O /etc/config/netshift https://raw.githubusercontent.com/D4NICKY/netshift/refs/heads/main/netshift/files/etc/config/netshift
 # затем настроить заново через LuCI или UCI
 ```
 
@@ -113,7 +113,7 @@ wget -O /etc/config/netshift https://raw.githubusercontent.com/yandexru45/netshi
 Для установки и обновления достаточно одного скрипта:
 
 ```sh
-sh <(wget -O - https://raw.githubusercontent.com/yandexru45/netshift/refs/heads/main/install.sh)
+sh <(wget -O - https://raw.githubusercontent.com/D4NICKY/netshift/refs/heads/main/install.sh)
 ```
 
 Интерфейс появится в LuCI: **Services → NetShift**.
@@ -249,7 +249,7 @@ uci commit netshift
 
 ## История изменений
 
-Полный список изменений по версиям - на странице [Releases](https://github.com/yandexru45/netshift/releases). Анонсы обновлений публикуются в [Telegram-канале](https://t.me/netshift_news).
+Полный список изменений по версиям - на странице [Releases](https://github.com/D4NICKY/netshift/releases). Анонсы обновлений публикуются в [Telegram-канале](https://t.me/netshift_news).
 
 Коротко о крупных вехах:
 
@@ -317,11 +317,11 @@ docker build -f Dockerfile-apk --build-arg NETSHIFT_VERSION=0.9.1 -t netshift:ap
 
 ## Star History
 
-<a href="https://www.star-history.com/#yandexru45/netshift&Date">
+<a href="https://www.star-history.com/#D4NICKY/netshift&Date">
  <picture>
-   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=yandexru45/netshift&type=Date&theme=dark" />
-   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=yandexru45/netshift&type=Date" />
-   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=yandexru45/netshift&type=Date" />
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=D4NICKY/netshift&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=D4NICKY/netshift&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=D4NICKY/netshift&type=Date" />
  </picture>
 </a>
 
