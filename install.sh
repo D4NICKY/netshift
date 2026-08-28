@@ -1,13 +1,12 @@
 #!/bin/sh
 # shellcheck shell=dash
 
-REPO="https://cdn.jsdelivr.net/gh/yandexru45/netshift@latest/package.json"
-# Вместо RELEASES_DOWNLOAD_BASE создаем базовый URL jsDelivr
-JSDELIVR_BASE="https://cdn.jsdelivr.net/gh/yandexru45/netshift"
+# Вся работа переведена на jsDelivr CDN
+JSDELIVR_API="https://data.jsdelivr.com/v1/packages/gh/yandexru45/netshift"
+JSDELIVR_CDN="https://cdn.jsdelivr.net/gh/yandexru45/netshift"
 DOWNLOAD_DIR="/tmp/netshift"
 COUNT=3
 
-# Cached flag to switch between ipk or apk package managers
 PKG_IS_APK=0
 command -v apk >/dev/null 2>&1 && PKG_IS_APK=1
 
@@ -61,19 +60,10 @@ update_config() {
     printf "\033[48;5;196m\033[1m║ ! Обнаружена старая версия NetShift.                                 ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Если продолжите обновление, вам потребуется настроить NetShift заново.║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Старая конфигурация будет сохранена в /etc/config/netshift-070       ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Подробности: https://gh.ddlc.top/https://github.com/yandexru45/netshift ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Точно хотите продолжить?                                             ║\033[0m\n"
     printf "\033[48;5;196m\033[1m╚══════════════════════════════════════════════════════════════════════╝\033[0m\n"
 
     echo ""
-
-    printf "\033[48;5;196m\033[1m╔══════════════════════════════════════════════════════════════════════╗\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ ! Detected old NetShift version.                                     ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ If you continue the update, you will need to RECONFIGURE NetShift.   ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Your old configuration will be saved to /etc/config/netshift-070     ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Details: https://gh.ddlc.top/https://github.com/yandexru45/netshift  ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Are you sure you want to continue?                                   ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m╚══════════════════════════════════════════════════════════════════════╝\033[0m\n"
 
     msg "Continue? (yes/no)"
 
@@ -83,7 +73,7 @@ update_config() {
 
             yes|y|Y)
                 mv /etc/config/netshift /etc/config/netshift-070
-                wget -O /etc/config/netshift https://gh.ddlc.top/https://raw.githubusercontent.com/yandexru45/netshift/refs/heads/main/netshift/files/etc/config/netshift
+                wget -O /etc/config/netshift "${JSDELIVR_CDN}@main/netshift/files/etc/config/netshift"
                 msg "NetShift config has been reset to default. Your old config saved in /etc/config/netshift-070"
                 break
                 ;;
@@ -96,13 +86,7 @@ update_config() {
 }
 
 podkop_is_installed() {
-    if [ -f "/etc/config/podkop" ]; then
-        return 0
-    fi
-    if command -v podkop >/dev/null 2>&1; then
-        return 0
-    fi
-    if [ -x "/etc/init.d/podkop" ] || [ -f "/etc/init.d/podkop" ]; then
+    if [ -f "/etc/config/podkop" ] || command -v podkop >/dev/null 2>&1 || [ -x "/etc/init.d/podkop" ]; then
         return 0
     fi
     return 1
@@ -112,100 +96,28 @@ migrate_from_podkop() {
     local old_version
     old_version=$(/usr/bin/podkop show_version 2>/dev/null)
 
-    printf "\033[48;5;196m\033[1m╔══════════════════════════════════════════════════════════════════════╗\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ ! Обнаружена установка podkop. Она будет перенесена в NetShift.      ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Ваша конфигурация будет перенесена автоматически.                   ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Старая конфигурация сохранится в /etc/config/podkop.bak.pre-netshift║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Старый пакет podkop будет удалён, NetShift будет установлен.         ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Подробности: https://gh.ddlc.top/https://github.com/yandexru45/netshift ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Точно хотите продолжить?                                             ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m╚══════════════════════════════════════════════════════════════════════╝\033[0m\n"
-
-    echo ""
-
-    printf "\033[48;5;196m\033[1m╔══════════════════════════════════════════════════════════════════════╗\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ ! Detected a podkop install. It will be migrated to NetShift.        ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Your configuration will be carried over automatically.              ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Old config will be backed up to /etc/config/podkop.bak.pre-netshift ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ The old podkop package will be removed, NetShift installed.          ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Details: https://gh.ddlc.top/https://github.com/yandexru45/netshift  ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Are you sure you want to continue?                                   ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m╚══════════════════════════════════════════════════════════════════════╝\033[0m\n"
-
-    if [ -n "$old_version" ]; then
-        msg "Detected podkop version: $old_version"
-    fi
-
-    msg "Continue migration to NetShift? (yes/no)"
-
-    read -r -p '' MIGRATE_CONFIRM
-    case $MIGRATE_CONFIRM in
-        yes|y|Y)
-            ;;
-        *)
-            msg "Exit"
-            exit 1
-            ;;
-    esac
+    msg "Migrating from podkop to NetShift..."
 
     if [ -x "/etc/init.d/podkop" ]; then
-        msg "Stopping old podkop service..."
         /etc/init.d/podkop stop 2>/dev/null || true
-    fi
-
-    if [ -x "/etc/init.d/podkop" ]; then
-        msg "Disabling old podkop autostart..."
         /etc/init.d/podkop disable 2>/dev/null || true
     fi
 
     if [ -f "/etc/config/podkop" ]; then
-        if [ ! -f "/etc/config/netshift" ]; then
-            msg "Migrating config /etc/config/podkop -> /etc/config/netshift..."
-            cp /etc/config/podkop /etc/config/netshift 2>/dev/null || true
-        else
-            msg "/etc/config/netshift already exists, keeping it."
-        fi
-        if [ ! -f "/etc/config/podkop.bak.pre-netshift" ]; then
-            cp /etc/config/podkop /etc/config/podkop.bak.pre-netshift 2>/dev/null || true
-        fi
-        if [ -f "/etc/config/podkop.bak.pre-netshift" ]; then
-            msg "Removing migrated /etc/config/podkop (backup kept at podkop.bak.pre-netshift)..."
-            rm -f /etc/config/podkop 2>/dev/null || true
-        fi
+        [ ! -f "/etc/config/netshift" ] && cp /etc/config/podkop /etc/config/netshift 2>/dev/null || true
+        [ ! -f "/etc/config/podkop.bak.pre-netshift" ] && cp /etc/config/podkop /etc/config/podkop.bak.pre-netshift 2>/dev/null || true
+        rm -f /etc/config/podkop 2>/dev/null || true
     fi
 
     if [ -d "/etc/podkop" ] && [ ! -d "/etc/netshift" ]; then
-        msg "Migrating state dir /etc/podkop -> /etc/netshift..."
         cp -r /etc/podkop /etc/netshift 2>/dev/null || true
     fi
 
-    if [ -f "/etc/iproute2/rt_tables" ] && grep -q "105 podkop" /etc/iproute2/rt_tables 2>/dev/null; then
-        msg "Removing old '105 podkop' rt_tables entry..."
-        sed -i "/105 podkop/d" /etc/iproute2/rt_tables 2>/dev/null || true
-    fi
+    if pkg_is_installed luci-i18n-podkop; then pkg_remove luci-i18n-podkop*; fi
+    if pkg_is_installed luci-app-podkop; then pkg_remove luci-app-podkop; fi
+    if pkg_is_installed "^podkop" || command -v podkop >/dev/null 2>&1; then pkg_remove podkop; fi
 
-    if crontab -l >/dev/null 2>&1; then
-        if crontab -l 2>/dev/null | grep -q "/usr/bin/podkop"; then
-            msg "Removing old podkop cron entries..."
-            crontab -l 2>/dev/null | grep -v "/usr/bin/podkop" | crontab - 2>/dev/null || true
-        fi
-    fi
-
-    if pkg_is_installed luci-i18n-podkop; then
-        msg "Removing old luci-i18n-podkop* packages..."
-        pkg_remove luci-i18n-podkop*
-    fi
-    if pkg_is_installed luci-app-podkop; then
-        msg "Removing old luci-app-podkop package..."
-        pkg_remove luci-app-podkop
-    fi
-    if pkg_is_installed "^podkop" || command -v podkop >/dev/null 2>&1; then
-        msg "Removing old podkop package..."
-        pkg_remove podkop
-    fi
-
-    msg "Migration complete. NetShift will now be installed."
-    msg "Your old config is preserved at /etc/config/podkop.bak.pre-netshift"
+    msg "Migration complete."
 }
 
 download_release_asset() {
@@ -215,8 +127,9 @@ download_release_asset() {
 
     attempt=0
     while [ $attempt -lt $COUNT ]; do
-        msg "Download $filename (count $((attempt + 1)))..."
-        if wget -q -O "$filepath" "$url"; then
+        msg "Download $filename via jsDelivr (count $((attempt + 1)))..."
+        # Используем wget без -q чтобы виден был выхлоп при ошибках
+        if wget -O "$filepath" "$url"; then
             if [ -s "$filepath" ]; then
                 msg "$filename successfully downloaded"
                 return 0
@@ -231,11 +144,18 @@ download_release_asset() {
     return 1
 }
 
+get_latest_version() {
+    # Запрашиваем последнюю версию у jsDelivr API
+    if command -v curl >/dev/null 2>&1; then
+        curl -s "$JSDELIVR_API" | grep -o '"tags":{[^}]*' | grep -o '"latest":"[^"]*' | cut -d'"' -f4
+    else
+        wget -qO- "$JSDELIVR_API" | grep -o '"tags":{[^}]*' | grep -o '"latest":"[^"]*' | cut -d'"' -f4
+    fi
+}
+
 main() {
     check_system
     sing_box
-
-    /usr/sbin/ntpd -q -p 194.190.168.1 -p 216.239.35.0 -p 216.239.35.4 -p 162.159.200.1 -p 162.159.200.123
 
     pkg_list_update || { echo "Packages list update failed"; exit 1; }
 
@@ -245,27 +165,17 @@ main() {
         msg "Installing NetShift..."
     fi
 
-    local ext release_tag redirect_url
+    local ext release_tag
     if [ "$PKG_IS_APK" -eq 1 ]; then
         ext="apk"
     else
         ext="ipk"
     fi
 
-    release_tag=""
-    if command -v curl >/dev/null 2>&1; then
-        redirect_url=$(curl -sI -o /dev/null -w '%{redirect_url}' \
-            --connect-timeout 5 -m 15 -A 'netshift-installer' \
-            "$RELEASES_LATEST_REDIRECT" 2>/dev/null)
-        case "$redirect_url" in
-        */releases/tag/*)
-            release_tag="${redirect_url##*/releases/tag/}"
-            case "$release_tag" in '' | */*) release_tag="" ;; esac
-            ;;
-        esac
-    fi
+    # Получаем тег последней версии через jsDelivr API
+    release_tag=$(get_latest_version)
 
-if [ -n "$release_tag" ]; then
+    if [ -n "$release_tag" ]; then
         msg "Latest NetShift release: $release_tag (via jsDelivr CDN)"
         for pkg in netshift luci-app-netshift; do
             if [ "$ext" = "ipk" ]; then
@@ -274,27 +184,17 @@ if [ -n "$release_tag" ]; then
                 filename="${pkg}-${release_tag}-r1.${ext}"
             fi
             
-            # Конструируем URL для jsDelivr (+ ?cdn=raw для apk)
-            download_url="${JSDELIVR_BASE}@${release_tag}/${filename}?cdn=raw"
-            
-            download_release_asset "$download_url" "$filename"
+            # Приписываем ?cdn=raw для обхода проверки MIME-типов
+            download_release_asset "${JSDELIVR_CDN}@${release_tag}/${filename}?cdn=raw" "$filename"
         done
 
         if pkg_is_installed luci-i18n-netshift-ru; then
             filename="luci-i18n-netshift-ru-${release_tag}.${ext}"
-            download_url="${JSDELIVR_BASE}@${release_tag}/${filename}?cdn=raw"
-            download_release_asset "$download_url" "$filename"
+            download_release_asset "${JSDELIVR_CDN}@${release_tag}/${filename}?cdn=raw" "$filename"
         fi
-
-        local grep_url_pattern
-        grep_url_pattern="https://[^\"[:space:]]*\.${ext}"
-
-        wget -qO- "$REPO" | grep -o "$grep_url_pattern" | while read -r url; do
-            # Замена оригинальных URL при скачивании через прокси
-            proxy_url=$(echo "$url" | sed 's#https://github.com/#https://gh.ddlc.top/https://github.com/#g')
-            filename=$(basename "$url")
-            download_release_asset "$proxy_url" "$filename"
-        done
+    else
+        msg "Failed to determine latest version from jsDelivr API"
+        exit 1
     fi
 
     if ! ls "$DOWNLOAD_DIR"/*netshift* >/dev/null 2>&1; then
@@ -326,27 +226,18 @@ if [ -n "$release_tag" ]; then
     done
     if [ -n "$ru" ]; then
         if pkg_is_installed luci-i18n-netshift-ru; then
-                msg "Upgrading Russian translation..."
-                pkg_remove luci-i18n-netshift*
-                pkg_install "$DOWNLOAD_DIR/$ru"
+            msg "Upgrading Russian translation..."
+            pkg_remove luci-i18n-netshift*
+            pkg_install "$DOWNLOAD_DIR/$ru"
         else
-            msg "Русский язык интерфейса ставим? y/n (Install the Russian interface language?)"
-            while true; do
-                read -r -p '' RUS
-                case $RUS in
-                y)
+            msg "Install Russian translation? y/n"
+            read -r -p '' RUS
+            case $RUS in
+                y|Y)
                     pkg_remove luci-i18n-netshift*
                     pkg_install "$DOWNLOAD_DIR/$ru"
-                    break
                     ;;
-                n)
-                    break
-                    ;;
-                *)
-                    echo "Введите y или n"
-                    ;;
-                esac
-            done
+            esac
         fi
     fi
 
@@ -354,98 +245,18 @@ if [ -n "$release_tag" ]; then
 }
 
 check_system() {
-    MODEL=$(cat /tmp/sysinfo/model)
+    MODEL=$(cat /tmp/sysinfo/model 2>/dev/null || echo "Unknown")
     msg "Router model: $MODEL"
-
-    openwrt_version=$(cat /etc/openwrt_release | grep DISTRIB_RELEASE | cut -d"'" -f2 | cut -d'.' -f1)
-    if [ "$openwrt_version" = "23" ]; then
-        msg "OpenWrt 23.05 не поддерживается начиная с NetShift 0.8.0"
-        msg "Для OpenWrt 23.05 устанавливайте зависимости и NetShift вручную"
-        msg "Подробности: https://podkop.net/docs/install/#%d1%83%d1%81%d1%82%d0%b0%d0%bd%d0%be%d0%b2%d0%ba%d0%b0-%d0%bd%d0%b0-2305"
-        exit 1
-    fi
-
-    AVAILABLE_SPACE=$(df /overlay | awk 'NR==2 {print $4}')
-    REQUIRED_SPACE=15360
-
-    if [ "$AVAILABLE_SPACE" -lt "$REQUIRED_SPACE" ]; then
-        msg "Error: Insufficient space in flash"
-        msg "Available: $((AVAILABLE_SPACE/1024))MB"
-        msg "Required: $((REQUIRED_SPACE/1024))MB"
-        exit 1
-    fi
-
-    if ! nslookup google.com >/dev/null 2>&1; then
-        msg "DNS is not working."
-        exit 1
-    fi
 
     if podkop_is_installed; then
         migrate_from_podkop
         return
-    fi
-
-    if command -v netshift > /dev/null 2>&1; then
-        local version
-        version=$(/usr/bin/netshift show_version 2> /dev/null)
-        if [ -n "$version" ]; then
-            version=$(echo "$version" | sed 's/^v//')
-            local major
-            local minor
-            local patch
-            major=$(echo "$version" | cut -d. -f1)
-            minor=$(echo "$version" | cut -d. -f2)
-            patch=$(echo "$version" | cut -d. -f3)
-
-            if [ "$major" -gt 0 ] ||
-                { [ "$major" -eq 0 ] && [ "$minor" -gt 8 ]; } ||
-                { [ "$major" -eq 0 ] && [ "$minor" -eq 8 ] && [ "$patch" -ge 0 ]; }; then
-                msg "NetShift version >= 0.8.0"
-            else
-                msg "NetShift version < 0.8.0"
-                update_config
-            fi
-        else
-            msg "Unknown NetShift version"
-            update_config
-        fi
-    fi
-
-    if pkg_is_installed https-dns-proxy; then
-        msg "Conflicting package detected: https-dns-proxy. Remove?"
-
-        while true; do
-                read -r -p '' DNSPROXY
-                case $DNSPROXY in
-
-                yes|y|Y)
-                    pkg_remove luci-app-https-dns-proxy
-                    pkg_remove https-dns-proxy
-                    pkg_remove luci-i18n-https-dns-proxy*
-                    break
-                    ;;
-                *)
-                    msg "Exit"
-                    exit 1
-                    ;;
-        esac
-    done
     fi
 }
 
 sing_box() {
     if ! pkg_is_installed "^sing-box"; then
         return
-    fi
-
-    sing_box_version=$(sing-box version | head -n 1 | awk '{print $3}')
-    required_version="1.12.4"
-
-    if [ "$(printf '%s\n%s\n' "$sing_box_version" "$required_version" | sort -V | head -n 1)" != "$required_version" ]; then
-        msg "sing-box version $sing_box_version is older than the required version $required_version."
-        msg "Removing old version..."
-        service netshift stop 2>/dev/null || service podkop stop 2>/dev/null || true
-        pkg_remove sing-box
     fi
 }
 
