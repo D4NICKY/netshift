@@ -81,7 +81,7 @@ update_config() {
         case $CONFIG_UPDATE in
             yes|y|Y)
                 mv /etc/config/netshift /etc/config/netshift-070
-                wget -O /etc/config/netshift https://cdn.jsdelivr.net/gh/D4NICKY/netshift/netshift/files/etc/config/netshift
+                wget --no-check-certificate -O /etc/config/netshift https://cdn.jsdelivr.net/gh/D4NICKY/netshift/netshift/files/etc/config/netshift
                 msg "NetShift config has been reset to default. Your old config saved in /etc/config/netshift-070"
                 break
                 ;;
@@ -214,7 +214,7 @@ download_release_asset() {
     attempt=0
     while [ $attempt -lt $COUNT ]; do
         msg "Download $filename (count $((attempt + 1)))..."
-        if wget -q -O "$filepath" "$url"; then
+        if wget --no-check-certificate -q -O "$filepath" "$url"; then
             if [ -s "$filepath" ]; then
                 msg "$filename successfully downloaded"
                 return 0
@@ -250,25 +250,20 @@ main() {
         ext="ipk"
     fi
 
-    # 1. Получаем актуальный тег последней версии
+    # Получаем заголовок Location редиректа через wget без использования curl
     release_tag=""
-    if command -v curl >/dev/null 2>&1; then
-        redirect_url=$(curl -sI -o /dev/null -w '%{redirect_url}' \
-            --connect-timeout 5 -m 15 -A 'netshift-installer' \
-            "$RELEASES_LATEST_REDIRECT" 2>/dev/null)
-        case "$redirect_url" in
+    redirect_url=$(wget --no-check-certificate --max-redirect=0 "$RELEASES_LATEST_REDIRECT" 2>&1 | grep -i "Location:" | awk '{print $2}')
+    case "$redirect_url" in
         */releases/tag/*)
             release_tag="${redirect_url##*/releases/tag/}"
             case "$release_tag" in '' | */*) release_tag="" ;; esac
             ;;
-        esac
-    fi
+    esac
 
-    # 2. Формируем ссылки и скачиваем файлы через jsDelivr CDN
+    # Скачивание файлов через jsDelivr CDN
     if [ -n "$release_tag" ]; then
         msg "Latest NetShift release: $release_tag (via jsDelivr CDN)"
         
-        # Базовый URL jsDelivr CDN для коммита/тега в репозитории
         CDN_BASE="https://cdn.jsdelivr.net/gh/yandexru45/netshift@$release_tag"
 
         for pkg in netshift luci-app-netshift; do
@@ -285,7 +280,7 @@ main() {
             download_release_asset "$CDN_BASE/$filename" "$filename"
         fi
     else
-        # Резервный механизм, если редирект GitHub заблокирован: пробуем через jsDelivr напрямую
+        # Резервная загрузка из ветки main через jsDelivr
         msg "Fallback: Trying jsDelivr main branch CDN directly..."
         CDN_BASE="https://cdn.jsdelivr.net/gh/yandexru45/netshift@main"
         
