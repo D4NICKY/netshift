@@ -1,7 +1,6 @@
 #!/bin/sh
 # shellcheck shell=dash
 
-# Вся работа переведена на jsDelivr CDN
 JSDELIVR_API="https://data.jsdelivr.com/v1/packages/gh/yandexru45/netshift"
 JSDELIVR_CDN="https://cdn.jsdelivr.net/gh/yandexru45/netshift"
 DOWNLOAD_DIR="/tmp/netshift"
@@ -60,11 +59,9 @@ update_config() {
     printf "\033[48;5;196m\033[1m║ ! Обнаружена старая версия NetShift.                                 ║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Если продолжите обновление, вам потребуется настроить NetShift заново.║\033[0m\n"
     printf "\033[48;5;196m\033[1m║ Старая конфигурация будет сохранена в /etc/config/netshift-070       ║\033[0m\n"
-    printf "\033[48;5;196m\033[1m║ Точно хотите продолжить?                                             ║\033[0m\n"
     printf "\033[48;5;196m\033[1m╚══════════════════════════════════════════════════════════════════════╝\033[0m\n"
 
     echo ""
-
     msg "Continue? (yes/no)"
 
     while true; do
@@ -93,9 +90,6 @@ podkop_is_installed() {
 }
 
 migrate_from_podkop() {
-    local old_version
-    old_version=$(/usr/bin/podkop show_version 2>/dev/null)
-
     msg "Migrating from podkop to NetShift..."
 
     if [ -x "/etc/init.d/podkop" ]; then
@@ -128,7 +122,6 @@ download_release_asset() {
     attempt=0
     while [ $attempt -lt $COUNT ]; do
         msg "Download $filename via jsDelivr (count $((attempt + 1)))..."
-        # Используем wget без -q чтобы виден был выхлоп при ошибках
         if wget -O "$filepath" "$url"; then
             if [ -s "$filepath" ]; then
                 msg "$filename successfully downloaded"
@@ -145,7 +138,6 @@ download_release_asset() {
 }
 
 get_latest_version() {
-    # Запрашиваем последнюю версию у jsDelivr API
     if command -v curl >/dev/null 2>&1; then
         curl -s "$JSDELIVR_API" | grep -o '"tags":{[^}]*' | grep -o '"latest":"[^"]*' | cut -d'"' -f4
     else
@@ -172,7 +164,6 @@ main() {
         ext="ipk"
     fi
 
-    # Получаем тег последней версии через jsDelivr API
     release_tag=$(get_latest_version)
 
     if [ -n "$release_tag" ]; then
@@ -184,7 +175,6 @@ main() {
                 filename="${pkg}-${release_tag}-r1.${ext}"
             fi
             
-            # Приписываем ?cdn=raw для обхода проверки MIME-типов
             download_release_asset "${JSDELIVR_CDN}@${release_tag}/${filename}?cdn=raw" "$filename"
         done
 
